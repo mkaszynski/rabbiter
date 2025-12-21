@@ -5,7 +5,8 @@ import math
 import time
 import numpy as np
 
-IMAGE_PATH = '/home/michael/coding/python/games/rabbiter/'
+IMAGE_PATH = "/home/michael/coding/python/games/rabbiter/"
+
 
 pygame.init()
 
@@ -89,7 +90,6 @@ for i in area:
 m *= 1 / LENGTH / WIDTH
 
 
-
 def rect_alpha(x, y, w, h, c):
     rect = pygame.Rect(x, y, w, h)
     shape_surf = pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
@@ -100,7 +100,7 @@ def rect_alpha(x, y, w, h, c):
 AIR_BLOCK = 0
 WATER_BLOCK = 1
 FULL_PIPE_BLOCK = 2
-CARROT_BLOCK  = 3
+CARROT_BLOCK = 3
 WALL_BLOCK = 4
 RABBIT_BLOCK = 5
 SELLER_BLOCK = 6
@@ -115,16 +115,19 @@ AMMO_BLOCK = 14
 PIPE_BLOCK = 15
 CHICKEN_BLOCK = 16
 FERTILIZER_BLOCK = 17
-VAULT_BLOCK  = 18
+VAULT_BLOCK = 18
 MONEY_BLOCK = 19
 TRADER_BLOCK = 20
 BOMB_BLOCK = 21
+ARTILARY_BLOCK = 22
+SHELL_BLOCK = 23
+SHELL_BLOCK2 = 24
 
 labels = {
     AIR_BLOCK: "air",
     WATER_BLOCK: "water",
     FULL_PIPE_BLOCK: "full pipe",
-    CARROT_BLOCK : "carrot",
+    CARROT_BLOCK: "carrot",
     WALL_BLOCK: "wall",
     RABBIT_BLOCK: "rabbit",
     SELLER_BLOCK: "seller",
@@ -139,10 +142,13 @@ labels = {
     PIPE_BLOCK: "pipe",
     CHICKEN_BLOCK: "chicken",
     FERTILIZER_BLOCK: "fertilizer",
-    VAULT_BLOCK : "vault wall",
+    VAULT_BLOCK: "vault wall",
     MONEY_BLOCK: "money",
     TRADER_BLOCK: "trader",
     BOMB_BLOCK: "bomb",
+    ARTILARY_BLOCK: "artilary",
+    SHELL_BLOCK: "shell",
+    SHELL_BLOCK2: "shell2",
 }
 
 colors = {
@@ -167,7 +173,10 @@ colors = {
     VAULT_BLOCK: (50, 50, 50),
     MONEY_BLOCK: (255, 200, 0),
     TRADER_BLOCK: (0, 255, 0),
-    BOMB_BLOCK: (128, 100, 100)
+    BOMB_BLOCK: (128, 100, 100),
+    ARTILARY_BLOCK: (100, 100, 130),
+    SHELL_BLOCK: (100, 75, 75),
+    SHELL_BLOCK2: (100, 75, 75),
 }
 
 selection = {
@@ -186,7 +195,8 @@ selection = {
     12: FERTILIZER_BLOCK,
     13: VAULT_BLOCK,
     14: TRADER_BLOCK,
-    15: BOMB_BLOCK
+    15: BOMB_BLOCK,
+    16: ARTILARY_BLOCK,
 }
 
 cost = {
@@ -199,7 +209,7 @@ cost = {
     BUYER_BLOCK: 20,
     TURRET_BLOCK: 35,
     BULLET_BLOCK: 0,
-    TRAPPER_BLOCK: 6,
+    TRAPPER_BLOCK: 4,
     AMMO_BLOCK: 1,
     PIPE_BLOCK: 8,
     FULL_PIPE_BLOCK: 8,
@@ -208,32 +218,35 @@ cost = {
     VAULT_BLOCK: 50,
     MONEY_BLOCK: 5,
     TRADER_BLOCK: 20,
-    BOMB_BLOCK: 25
+    BOMB_BLOCK: 25,
+    ARTILARY_BLOCK: 60,
 }
 
 strength = {
-    WALL_BLOCK: 0.94,
+    WALL_BLOCK: 0.975,
     SELLER_BLOCK: 0.5,
     BUYER_BLOCK: 0.7,
     INSERTER1_BLOCK: 0.7,
     INSERTER2_BLOCK: 0.7,
     INSERTER3_BLOCK: 0.7,
-    TURRET_BLOCK: 0.85,
-    TRAPPER_BLOCK: 0.8,
+    TURRET_BLOCK: 0.95,
+    TRAPPER_BLOCK: 0.7,
     AMMO_BLOCK: 0.4,
     PIPE_BLOCK: 0.6,
     FULL_PIPE_BLOCK: 0.6,
     CHICKEN_BLOCK: 0.5,
     FERTILIZER_BLOCK: 0,
-    VAULT_BLOCK: 0.995,
+    VAULT_BLOCK: 0.9975,
     MONEY_BLOCK: 0.5,
     TRADER_BLOCK: 0.5,
-    BOMB_BLOCK: 0.9
+    BOMB_BLOCK: 0.9,
+    ARTILARY_BLOCK: 0.99,
 }
 
 ###############################################################################
 # load all images
 ###############################################################################
+
 
 def load_image(image_label):
     image_file = os.path.join(IMAGE_PATH, f"{image_label}.png")
@@ -244,6 +257,7 @@ def load_image(image_label):
     image = pygame.transform.scale(image, (BLOCK_SIZE, BLOCK_SIZE))
     return image
 
+
 images = {block_label: load_image(label) for block_label, label in labels.items()}
 
 ###############################################################################
@@ -251,8 +265,8 @@ select = 0
 
 time1 = -1000
 
-money = 40  # debug
-# money = 4000000
+money = 40
+
 
 hardness = 0.99999
 
@@ -299,15 +313,17 @@ level = abs2(level - 1) + 1
 
 level = 11 - level
 
+
 def rand_change(rand, change):
     rand = 1 - rand
-    rand = 1/rand
+    rand = 1 / rand
     rand /= change
-    rand = 1/rand
+    rand = 1 / rand
     rand = 1 - rand
     return rand
 
-tick_power = 5
+
+tick_power = 3
 
 ###############################################################################
 # Main application loop
@@ -321,9 +337,9 @@ while running:
     keys = pygame.key.get_pressed()
     mx, my = pygame.mouse.get_pos()
     mouse_held = pygame.mouse.get_pressed()
-    
+
     timer = time.time()
-    
+
     if keys[pygame.K_w]:
         scrolly -= 30
     if keys[pygame.K_s]:
@@ -332,19 +348,19 @@ while running:
         scrollx -= 30
     if keys[pygame.K_d]:
         scrollx += 30
-    
-    posx = scrollx*0.25 + posx*0.75
-    posy = scrolly*0.25 + posy*0.75
-    
+
+    posx = scrollx * 0.25 + posx * 0.75
+    posy = scrolly * 0.25 + posy * 0.75
+
     if scrollx < 0:
         scrollx = 0
     if scrolly < 0:
         scrolly = 0
-    
-    if scrollx > BLOCK_SIZE*LENGTH - 40*BLOCK_SIZE:
-        scrollx = BLOCK_SIZE*LENGTH - 40*BLOCK_SIZE
-    if scrolly > BLOCK_SIZE*WIDTH - 20*BLOCK_SIZE:
-        scrolly = BLOCK_SIZE*WIDTH - 20*BLOCK_SIZE
+
+    if scrollx > BLOCK_SIZE * LENGTH - 40 * BLOCK_SIZE:
+        scrollx = BLOCK_SIZE * LENGTH - 40 * BLOCK_SIZE
+    if scrolly > BLOCK_SIZE * WIDTH - 20 * BLOCK_SIZE:
+        scrolly = BLOCK_SIZE * WIDTH - 20 * BLOCK_SIZE
 
     time1 += 1
 
@@ -372,7 +388,7 @@ while running:
     updaterabbitmap = False
     if random.random() > 0.9:
         updaterabbitmap = True
-    
+
     if mouse_held[0] or mouse_held[2] or keys[pygame.K_q]:
         for j in blocks:
             for i in j:
@@ -393,31 +409,40 @@ while running:
                     and mouse_held[0]
                 ):
                     if i[2] != selection[select]:
-                        money += int(cost[i[2]] / 2)
                         if money >= cost[selection[select]]:
+                            money += int(cost[i[2]] / 2)
                             money -= cost[selection[select]]
                             i[2] = selection[select]
                 if i[2] in cost:
                     if mouse_held[2] and time1 % 12 == 0:
-                        if int((mx + posx) / BLOCK_SIZE) == i[0] and int((my + posy) / BLOCK_SIZE) == i[1]:
+                        if (
+                            int((mx + posx) / BLOCK_SIZE) == i[0]
+                            and int((my + posy) / BLOCK_SIZE) == i[1]
+                        ):
                             money += int(cost[i[2]] / 2)
                             i[2] = AIR_BLOCK
                 if i[2] == WATER_BLOCK:
                     if mouse_held[2] and time1 % 12 == 0:
-                        if int((mx + posx) / BLOCK_SIZE) == i[0] and int((my + posy) / BLOCK_SIZE) == i[1]:
+                        if (
+                            int((mx + posx) / BLOCK_SIZE) == i[0]
+                            and int((my + posy) / BLOCK_SIZE) == i[1]
+                        ):
                             if money >= 40:
                                 i[2] = AIR_BLOCK
                                 money -= 40
                 if keys[pygame.K_q]:
                     try:
-                        if int((mx + posx) / BLOCK_SIZE) == i[0] and int((my + posy) / BLOCK_SIZE) == i[1]:
+                        if (
+                            int((mx + posx) / BLOCK_SIZE) == i[0]
+                            and int((my + posy) / BLOCK_SIZE) == i[1]
+                        ):
                             mydic = {}
                             for m in selection.keys():
                                 mydic.update({selection[m]: m})
                             select = mydic[i[2]]
                     except:
                         pass
-    
+
     if time1 % tick_power == 0:
         for j in blocks:
             for i in j:
@@ -425,10 +450,10 @@ while running:
                     if random.random() > rand_change(hardness, tick_power):
                         if i[2] != WATER_BLOCK:
                             i[2] = RABBIT_BLOCK
-    
+
                 if i[2] == AIR_BLOCK:
                     continue
-    
+
                 if i[2] == CARROT_BLOCK:
                     try:
                         if blocks[i[0] - 1][i[1]][2] == AIR_BLOCK:
@@ -445,7 +470,9 @@ while running:
                                 blocks[i[0]][i[1] + 1][2] = CARROT_BLOCK
                     except:
                         pass
-                elif i[2] == RABBIT_BLOCK and random.random() > rand_change(0.9, tick_power):
+                elif i[2] == RABBIT_BLOCK and random.random() > rand_change(
+                    0.9, tick_power
+                ):
                     try:
                         s = []
                         s.append(blocks[i[0]][i[1] + 1])
@@ -595,12 +622,12 @@ while running:
                             s.append(blocks[i[0] + 1][i[1] - 1])
                             s.append(blocks[i[0] + 1][i[1]])
                             s.append(blocks[i[0] - 1][i[1]])
-    
+
                             m = []
                             for o in s:
                                 if o[2] == AIR_BLOCK:
                                     m.append(o)
-    
+
                             if m:
                                 u = random.choice(m)
                                 if blocks[i[0]][i[1] + 2][2] in cost and (
@@ -650,7 +677,7 @@ while running:
                                     if random.random() < cost[o[2]] / 5:
                                         blocks[b[0]][b[1]][2] = AIR_BLOCK
                                     blocks[m[0]][m[1]][2] = o[2]
-    
+
                     except:
                         pass
                 elif i[2] == TURRET_BLOCK:
@@ -664,7 +691,7 @@ while running:
                         for o in s:
                             if o[2] == AMMO_BLOCK:
                                 u = True
-    
+
                         if u and random.random() > rand_change(0.95, tick_power):
                             if (
                                 blocks[i[0]][i[1] + 1][2] == AIR_BLOCK
@@ -710,7 +737,7 @@ while running:
                         i[2] = AIR_BLOCK
                 elif i[2] == TRAPPER_BLOCK:
                     try:
-                        if random.random() > rand_change(0.93, tick_power):
+                        if random.random() > rand_change(0.97, tick_power):
                             if blocks[i[0]][i[1] + 1][2] == RABBIT_BLOCK:
                                 blocks[i[0]][i[1] + 1][2] = AIR_BLOCK
                             if blocks[i[0]][i[1] - 1][2] == RABBIT_BLOCK:
@@ -736,11 +763,15 @@ while running:
                         if u[2] == FULL_PIPE_BLOCK and random.random():
                             i[2] = FULL_PIPE_BLOCK
                             blocks[u[0]][u[1]][2] = PIPE_BLOCK
-                        if u[2] == WATER_BLOCK and random.random() > rand_change(0.95, tick_power):
+                        if u[2] == WATER_BLOCK and random.random() > rand_change(
+                            0.95, tick_power
+                        ):
                             i[2] = FULL_PIPE_BLOCK
                     except:
                         pass
-                elif i[2] == CHICKEN_BLOCK and random.random() > rand_change(0.96, tick_power):
+                elif i[2] == CHICKEN_BLOCK and random.random() > rand_change(
+                    0.96, tick_power
+                ):
                     try:
                         s = []
                         s.append(blocks[i[0]][i[1] + 1])
@@ -755,7 +786,7 @@ while running:
                             else:
                                 i[2] = CHICKEN_BLOCK
                                 blocks[u[0]][u[1]][2] = CHICKEN_BLOCK
-    
+
                     except:
                         pass
                 elif i[2] == BOMB_BLOCK:
@@ -778,6 +809,79 @@ while running:
                                 blocks[h[0]][h[1]][2] = BULLET_BLOCK
                         if random.random() > rand_change(0.95, tick_power):
                             i[2] = AIR_BLOCK
+                elif i[2] == ARTILARY_BLOCK:
+                    try:
+                        s = []
+                        s.append(blocks[i[0]][i[1] + 1])
+                        s.append(blocks[i[0]][i[1] - 1])
+                        s.append(blocks[i[0] + 1][i[1]])
+                        s.append(blocks[i[0] - 1][i[1]])
+                        for u in s:
+                            if u[2] == AMMO_BLOCK:
+                                blocks[u[0]][u[1]][2] = AIR_BLOCK
+                                blocks[i[0] * 2 - u[0]][i[1] * 2 - u[1]][2] = (
+                                    SHELL_BLOCK2
+                                )
+                                blocks[i[0] * 3 - u[0] * 2][i[1] * 3 - u[1] * 2][2] = (
+                                    SHELL_BLOCK
+                                )
+                    except:
+                        pass
+                elif i[2] == SHELL_BLOCK and random.random() > 0.25:
+                    try:
+                        s = []
+                        s.append(blocks[i[0]][i[1] + 1])
+                        s.append(blocks[i[0]][i[1] - 1])
+                        s.append(blocks[i[0] + 1][i[1]])
+                        s.append(blocks[i[0] - 1][i[1]])
+                        for u in s:
+                            if u[2] == SHELL_BLOCK2:
+                                if (
+                                    blocks[i[0] * 2 - u[0]][i[1] * 2 - u[1]][2]
+                                    != WATER_BLOCK
+                                ):
+                                    blocks[i[0] * 2 - u[0]][i[1] * 2 - u[1]][2] = (
+                                        SHELL_BLOCK
+                                    )
+                                    i[2] = SHELL_BLOCK2
+                                    blocks[u[0]][u[1]][2] = AIR_BLOCK
+                                else:
+                                    i[2] = AIR_BLOCK
+                                    blocks[u[0]][u[1]][2] = AIR_BLOCK
+                    except:
+                        i[2] = AIR_BLOCK
+                elif i[2] == SHELL_BLOCK2:
+                    try:
+                        s = []
+                        s.append(blocks[i[0]][i[1] + 1])
+                        s.append(blocks[i[0]][i[1] - 1])
+                        s.append(blocks[i[0] + 1][i[1]])
+                        s.append(blocks[i[0] - 1][i[1]])
+                        s.append(blocks[i[0]][i[1] + 2])
+                        s.append(blocks[i[0]][i[1] - 2])
+                        s.append(blocks[i[0] + 2][i[1]])
+                        s.append(blocks[i[0] - 2][i[1]])
+                        if random.random() > 0.99:
+                            i[2] = AIR_BLOCK
+                    except:
+                        i[2] = AIR_BLOCK
+                elif i[2] == SHELL_BLOCK:
+                    try:
+                        s = []
+                        s.append(blocks[i[0]][i[1] + 1])
+                        s.append(blocks[i[0]][i[1] - 1])
+                        s.append(blocks[i[0] + 1][i[1]])
+                        s.append(blocks[i[0] - 1][i[1]])
+                        s.append(blocks[i[0]][i[1] + 2])
+                        s.append(blocks[i[0]][i[1] - 2])
+                        s.append(blocks[i[0] + 2][i[1]])
+                        s.append(blocks[i[0] - 2][i[1]])
+                        if random.random() > 0.99:
+                            i[2] = AIR_BLOCK
+
+                    except:
+                        i[2] = AIR_BLOCK
+
                 try:
                     if i[2] == CARROT_BLOCK:
                         s = []
@@ -794,31 +898,47 @@ while running:
                                 if random.random() > rand_change(0.9985, tick_power):
                                     blocks[o[0]][o[1]][2] = PIPE_BLOCK
                                 if blocks[i[0] - 1][i[1]][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0] - 1][i[1]][2] = CARROT_BLOCK
                                 if blocks[i[0] + 1][i[1]][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0] + 1][i[1]][2] = CARROT_BLOCK
                                 if blocks[i[0]][i[1] - 1][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0]][i[1] - 1][2] = CARROT_BLOCK
                                 if blocks[i[0]][i[1] + 1][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0]][i[1] + 1][2] = CARROT_BLOCK
                             if o[2] == FERTILIZER_BLOCK:
                                 if random.random() > rand_change(0.9993, tick_power):
                                     blocks[o[0]][o[1]][2] = AIR_BLOCK
                                 if blocks[i[0] - 1][i[1]][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0] - 1][i[1]][2] = CARROT_BLOCK
                                 if blocks[i[0] + 1][i[1]][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0] + 1][i[1]][2] = CARROT_BLOCK
                                 if blocks[i[0]][i[1] - 1][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0]][i[1] - 1][2] = CARROT_BLOCK
                                 if blocks[i[0]][i[1] + 1][2] == AIR_BLOCK:
-                                    if random.random() > rand_change(0.9975, tick_power):
+                                    if random.random() > rand_change(
+                                        0.9975, tick_power
+                                    ):
                                         blocks[i[0]][i[1] + 1][2] = CARROT_BLOCK
                 except:
                     pass
@@ -856,10 +976,10 @@ while running:
     for j in blocks:
         for i in j:
             # try:
-                # image_file = os.path.join(IMAGE_PATH, labels[i[2]] + ".png")
-                # image = pygame.image.load(image_file).convert()
-                # image.set_colorkey((0, 0, 0))
-                # image = pygame.transform.scale(image, (BLOCK_SIZE, BLOCK_SIZE))
+            # image_file = os.path.join(IMAGE_PATH, labels[i[2]] + ".png")
+            # image = pygame.image.load(image_file).convert()
+            # image.set_colorkey((0, 0, 0))
+            # image = pygame.transform.scale(image, (BLOCK_SIZE, BLOCK_SIZE))
 
             image = images[i[2]]
             if image:
@@ -871,26 +991,30 @@ while running:
                 screen.blit(image, rect)
             else:
                 map1 = pygame.Rect(
-                    i[0] * BLOCK_SIZE - posx, i[1] * BLOCK_SIZE - posy, BLOCK_SIZE, BLOCK_SIZE
+                    i[0] * BLOCK_SIZE - posx,
+                    i[1] * BLOCK_SIZE - posy,
+                    BLOCK_SIZE,
+                    BLOCK_SIZE,
                 )
                 pygame.draw.rect(screen, colors[i[2]], map1)
                 # add_line(screen, str(i[3]), i[0]*BLOCK_SIZE, i[1]*BLOCK_SIZE)
-            
-            if (int((mx + posx) / BLOCK_SIZE) == i[0]
+
+            if (
+                int((mx + posx) / BLOCK_SIZE) == i[0]
                 and int((my + posy) / BLOCK_SIZE) == i[1]
-                ):
-                    rect_alpha(
-                        i[0] * BLOCK_SIZE - posx,
-                        i[1] * BLOCK_SIZE - posy,
-                        BLOCK_SIZE,
-                        BLOCK_SIZE,
-                        (
-                            colors[selection[select]][0],
-                            colors[selection[select]][1],
-                            colors[selection[select]][2],
-                            128,
-                        ),
-                    )
+            ):
+                rect_alpha(
+                    i[0] * BLOCK_SIZE - posx,
+                    i[1] * BLOCK_SIZE - posy,
+                    BLOCK_SIZE,
+                    BLOCK_SIZE,
+                    (
+                        colors[selection[select]][0],
+                        colors[selection[select]][1],
+                        colors[selection[select]][2],
+                        128,
+                    ),
+                )
 
     timer = time.time() - timer
 
