@@ -1,6 +1,6 @@
 ## Rabbiter
 
-A complicated farm game, where you defend carrots from rabbits using [pygame](https://www.pygame.org/)
+A complicated farm game, where you defend carrots from rabbits.Uses [pygame](https://www.pygame.org/)
 
 ![rabbiter.py](screenshot.png)
 
@@ -36,4 +36,3 @@ python rabbiter.py
 - "Left click" : Place a block
 - "Right click" : Remove a block
 
-```
