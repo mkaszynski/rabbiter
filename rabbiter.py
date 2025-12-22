@@ -1013,8 +1013,8 @@ while running:
         if image:
             if select == i:
                 rect_alpha(
-                    i * 80 + 195 - BLOCK_SIZE/2,
-                    795 - BLOCK_SIZE/2,
+                    i * 80 + 195 - BLOCK_SIZE / 2,
+                    795 - BLOCK_SIZE / 2,
                     BLOCK_SIZE + 10,
                     BLOCK_SIZE + 10,
                     colors[selection[i]],
