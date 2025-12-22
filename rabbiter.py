@@ -5,7 +5,7 @@ import math
 import time
 import numpy as np
 
-IMAGE_PATH = "/home/michael/coding/python/games/rabbiter/"
+IMAGE_PATH = "assets/"
 
 
 pygame.init()
@@ -196,7 +196,6 @@ selection = {
     13: VAULT_BLOCK,
     14: TRADER_BLOCK,
     15: BOMB_BLOCK,
-    16: ARTILARY_BLOCK,
 }
 
 cost = {
@@ -975,12 +974,6 @@ while running:
 
     for j in blocks:
         for i in j:
-            # try:
-            # image_file = os.path.join(IMAGE_PATH, labels[i[2]] + ".png")
-            # image = pygame.image.load(image_file).convert()
-            # image.set_colorkey((0, 0, 0))
-            # image = pygame.transform.scale(image, (BLOCK_SIZE, BLOCK_SIZE))
-
             image = images[i[2]]
             if image:
                 rect = image.get_rect()
@@ -997,7 +990,6 @@ while running:
                     BLOCK_SIZE,
                 )
                 pygame.draw.rect(screen, colors[i[2]], map1)
-                # add_line(screen, str(i[3]), i[0]*BLOCK_SIZE, i[1]*BLOCK_SIZE)
 
             if (
                 int((mx + posx) / BLOCK_SIZE) == i[0]
@@ -1015,6 +1007,25 @@ while running:
                         128,
                     ),
                 )
+
+    for i in selection.keys():
+        image = images[selection[i]]
+        if image:
+            if select == i:
+                rect_alpha(
+                    i * 80 + 195 - BLOCK_SIZE/2,
+                    795 - BLOCK_SIZE/2,
+                    BLOCK_SIZE + 10,
+                    BLOCK_SIZE + 10,
+                    colors[selection[i]],
+                )
+
+            rect = image.get_rect()
+            rect.center = (
+                i * 80 + 200,
+                800,
+            )
+            screen.blit(image, rect)
 
     timer = time.time() - timer
 
