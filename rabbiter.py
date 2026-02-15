@@ -4,9 +4,11 @@ import os
 import math
 import time
 import numpy as np
+import pickle
 
 IMAGE_PATH = "assets/"
 
+world_name = input("World name: ")
 
 pygame.init()
 
@@ -14,8 +16,53 @@ BLOCK_SIZE = 42
 
 LENGTH, WIDTH = 100, 100
 
+
+def abs2(value):
+    if value < 0:
+        value = 0
+    return value
+
+
+try:
+    level = pickle.load(open(world_name + ".w", "rb"))[2]
+except:
+    level = 11 - abs2(int(input("hardness: 1 - 10: ")) - 1) + 1
+
 # Set up the drawing window
 screen = pygame.display.set_mode([40 * BLOCK_SIZE, 20 * BLOCK_SIZE])
+
+AIR_BLOCK = 0
+WATER_BLOCK = 1
+FULL_PIPE_BLOCK = 2
+CARROT_BLOCK = 3
+WALL_BLOCK = 4
+RABBIT_BLOCK = 5
+SELLER_BLOCK = 6
+BUYER_BLOCK = 7
+INSERTER1_BLOCK = 8
+INSERTER2_BLOCK = 9
+INSERTER3_BLOCK = 10
+TURRET_BLOCK = 11
+BULLET_BLOCK = 12
+TRAPPER_BLOCK = 13
+AMMO_BLOCK = 14
+PIPE_BLOCK = 15
+CHICKEN_BLOCK = 16
+FERTILIZER_BLOCK = 17
+VAULT_BLOCK = 18
+MONEY_BLOCK = 19
+TRADER_BLOCK = 20
+BOMB_BLOCK = 21
+ARTILARY_BLOCK = 22
+SHELL_BLOCK = 23
+SHELL_BLOCK2 = 24
+
+ignore = [
+    WALL_BLOCK,
+    TRAPPER_BLOCK,
+    WALL_BLOCK,
+    BOMB_BLOCK,
+]
 
 
 def add_line(screen, text, x, y):
@@ -78,16 +125,23 @@ def perlin():
 
 font = pygame.font.Font("freesansbold.ttf", 20)
 
-blocks = []
-
-area = perlin()
-
-m = 0
-
-for i in area:
-    for j in i:
-        m += j
-m *= 1 / LENGTH / WIDTH
+try:
+    blocks = pickle.load(open(world_name + ".w", "rb"))[0]
+except:
+    area = perlin()
+    blocks = []
+    m = 0
+    for i in area:
+        for j in i:
+            m += j
+    m *= 1 / LENGTH / WIDTH
+    for i in range(LENGTH):
+        blocks.append([])
+        for j in range(WIDTH):
+            if area[j][i] > m - 20:
+                blocks[i].append([i, j, AIR_BLOCK, 10000])
+            else:
+                blocks[i].append([i, j, WATER_BLOCK, 10000])
 
 
 def rect_alpha(x, y, w, h, c):
@@ -96,32 +150,6 @@ def rect_alpha(x, y, w, h, c):
     pygame.draw.rect(shape_surf, c, shape_surf.get_rect())
     screen.blit(shape_surf, rect)
 
-
-AIR_BLOCK = 0
-WATER_BLOCK = 1
-FULL_PIPE_BLOCK = 2
-CARROT_BLOCK = 3
-WALL_BLOCK = 4
-RABBIT_BLOCK = 5
-SELLER_BLOCK = 6
-BUYER_BLOCK = 7
-INSERTER1_BLOCK = 8
-INSERTER2_BLOCK = 9
-INSERTER3_BLOCK = 10
-TURRET_BLOCK = 11
-BULLET_BLOCK = 12
-TRAPPER_BLOCK = 13
-AMMO_BLOCK = 14
-PIPE_BLOCK = 15
-CHICKEN_BLOCK = 16
-FERTILIZER_BLOCK = 17
-VAULT_BLOCK = 18
-MONEY_BLOCK = 19
-TRADER_BLOCK = 20
-BOMB_BLOCK = 21
-ARTILARY_BLOCK = 22
-SHELL_BLOCK = 23
-SHELL_BLOCK2 = 24
 
 labels = {
     AIR_BLOCK: "air",
@@ -262,12 +290,20 @@ images = {block_label: load_image(label) for block_label, label in labels.items(
 ###############################################################################
 select = 0
 
-time1 = -1000
+try:
+    time1 = pickle.load(open(world_name + ".w", "rb"))[1]
+except:
+    time1 = -1000
 
-money = 40
+try:
+    money = pickle.load(open(world_name + ".w", "rb"))[3]
+except:
+    money = 40
 
-
-hardness = 0.99999
+try:
+    hardness = pickle.load(open(world_name + ".w", "rb"))[4]
+except:
+    hardness = 0.99999
 
 selection_held = False
 
@@ -286,31 +322,6 @@ scrollx, scrolly = 0, 0
 # - block type
 # - rabbit priority value
 data = np.zeros((LENGTH, WIDTH, 4), dtype=int)
-
-
-for i in range(LENGTH):
-    blocks.append([])
-    for j in range(WIDTH):
-        if area[j][i] > m - 20:
-            blocks[i].append([i, j, AIR_BLOCK, 10000])
-        else:
-            blocks[i].append([i, j, WATER_BLOCK, 10000])
-
-
-def abs2(value):
-    if value < 0:
-        value = 0
-    return value
-
-
-level = int(input("hardness: 1 - 10: "))
-
-level = abs2(level - 1) + 1
-
-# if level > 10:
-#     level = 10
-
-level = 11 - level
 
 
 def rand_change(rand, change):
@@ -443,8 +454,8 @@ while running:
                         pass
 
     if time1 % tick_power == 0:
-        for j in blocks:
-            for i in j:
+        for j in random.sample(blocks, len(blocks)):
+            for i in random.sample(j, len(j)):
                 if i[0] == 0 or i[0] == LENGTH - 2 or i[1] == 0 or i[1] == WIDTH - 2:
                     if random.random() > rand_change(hardness, tick_power):
                         if i[2] != WATER_BLOCK:
@@ -758,14 +769,15 @@ while running:
                         s.append(blocks[i[0] + 1][i[1] - 1])
                         s.append(blocks[i[0] + 1][i[1]])
                         s.append(blocks[i[0] - 1][i[1]])
-                        u = random.choice(s)
-                        if u[2] == FULL_PIPE_BLOCK and random.random():
-                            i[2] = FULL_PIPE_BLOCK
-                            blocks[u[0]][u[1]][2] = PIPE_BLOCK
-                        if u[2] == WATER_BLOCK and random.random() > rand_change(
-                            0.95, tick_power
-                        ):
-                            i[2] = FULL_PIPE_BLOCK
+                        random.shuffle(s)
+                        for u in s:
+                            if u[2] == FULL_PIPE_BLOCK and i[2] == PIPE_BLOCK:
+                                i[2] = FULL_PIPE_BLOCK
+                                blocks[u[0]][u[1]][2] = PIPE_BLOCK
+                            if u[2] == WATER_BLOCK and random.random() > rand_change(
+                                0.95, tick_power
+                            ):
+                                i[2] = FULL_PIPE_BLOCK
                     except:
                         pass
                 elif i[2] == CHICKEN_BLOCK and random.random() > rand_change(
@@ -945,9 +957,9 @@ while running:
     if updaterabbitmap:
         for j in blocks:
             for i in j:
-                if i[2] in cost:
+                if i[2] in cost and i[2] not in ignore:
                     i[3] = 0
-                if i[2] == AIR_BLOCK:
+                if i[2] != WATER_BLOCK:
                     s = []
                     try:
                         s.append(blocks[i[0]][i[1] + 1])
@@ -1061,3 +1073,5 @@ while running:
 
 # Done! Time to quit.
 pygame.quit()
+
+pickle.dump([blocks, time1, level, money, hardness], open(world_name + ".w", "wb"))
