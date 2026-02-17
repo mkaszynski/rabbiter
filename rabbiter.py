@@ -957,32 +957,24 @@ while running:
     if updaterabbitmap:
         for j in blocks:
             for i in j:
-                if i[2] in cost and i[2] not in ignore:
-                    i[3] = 0
-                if i[2] != WATER_BLOCK:
+                if (
+                    i[2] != WATER_BLOCK
+                    and 0 < i[0] < len(blocks) - 1
+                    and 0 < i[1] < len(blocks) - 1
+                ):
                     s = []
-                    try:
-                        s.append(blocks[i[0]][i[1] + 1])
-                    except:
-                        pass
-                    try:
-                        s.append(blocks[i[0]][i[1] - 1])
-                    except:
-                        pass
-                    try:
-                        s.append(blocks[i[0] + 1][i[1]])
-                    except:
-                        pass
-                    try:
-                        s.append(blocks[i[0] - 1][i[1]])
-                    except:
-                        pass
-                    m = 100
+                    s.append(blocks[i[0]][i[1] + 1])
+                    s.append(blocks[i[0]][i[1] - 1])
+                    s.append(blocks[i[0] + 1][i[1]])
+                    s.append(blocks[i[0] - 1][i[1]])
+                    m = 1000
                     for u in s:
                         if u[3] <= m:
                             m = u[3]
-                    if not m == 100:
+                    if not m == 1000:
                         i[3] = m + 1
+                if i[2] in cost and i[2] not in ignore:
+                    i[3] = 0
 
     for j in blocks:
         for i in j:
